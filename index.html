@@ -3,69 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Демо виджета чата — Сибирь Проект</title>
-  <link rel="stylesheet" href="/widget/widget.css" />
+  <title>Демо виджета «На связи 24/7» — Сибирь Проект</title>
   <style>
     body { margin: 0; font-family: "Segoe UI", Inter, Arial, sans-serif; background: #f8fafc; color: #0f172a; }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 40px 20px 120px; }
-    h1 { margin: 0 0 8px; font-size: 32px; }
-    p.lead { margin: 0 0 24px; color: #475569; font-size: 18px; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 40px 20px 120px; }
+    h1 { margin: 0 0 10px; font-size: 32px; }
+    p.lead { margin: 0 0 22px; color: #475569; font-size: 18px; }
     .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin: 16px 0; }
     .card h2 { margin: 0 0 10px; font-size: 20px; }
-    code, pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; }
-    pre { padding: 14px; overflow: auto; font-size: 13px; line-height: 1.45; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 14px; overflow: auto; font-size: 13px; line-height: 1.45; }
+    code { font-family: Consolas, Menlo, monospace; }
     ul { margin: 8px 0 0 20px; }
-    .badge { display: inline-block; background: #e0f2fe; color: #075985; border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <span class="badge">Демо</span>
-    <h1>Виджет ИИ-консультанта «Сибирь Проект»</h1>
-    <p class="lead">Виджет подключает базу знаний (разделы сайта, FAQ, цены-ориентиры) и отвечает в анонимном режиме 24/7. Нажмите кнопку чата в правом нижнем углу.</p>
+    <h1>Виджет онлайн-чата «На связи 24/7»</h1>
+    <p class="lead">Демо-страница виджета для сайта «Сибирь Проект» (интеграция с GigaChat API через backend-прокси). Нажмите кнопку чата в правом нижнем углу.</p>
 
     <div class="card">
-      <h2>Что умеет виджет</h2>
+      <h2>Что реализовано</h2>
       <ul>
-        <li>Отвечает на вопросы об услугах: банковские гарантии, тендерное сопровождение, КИК, факторинг, ЭЦП, защита в ФАС.</li>
-        <li>Дает ориентиры по ценам и срокам из базы знаний и ссылки на разделы сайта.</li>
-        <li>Работает без сбора персональных данных и направляет в официальные контакты при сложных/индивидуальных вопросах.</li>
-        <li>Использует RAG: поиск релевантных фрагментов базы знаний + генерация ответа моделью (если настроен LLM API). Без API-ключа работает fallback-режим на основе найденных фрагментов.</li>
+        <li>Frontend: чистый HTML/CSS/Vanilla JS, подключение одним скриптом, адаптивная верстка.</li>
+        <li>UX: плавающая кнопка «Онлайн 24/7», приветствие, быстрые подсказки, индикатор «Консультант печатает...», отправка по Enter.</li>
+        <li>Приватность: без полей имени/телефона/email; история чата хранится только в <code>sessionStorage</code> вкладки.</li>
+        <li>Backend: FastAPI-прокси к GigaChat API, безопасное хранение ключа, получение/автообновление <code>access_token</code>.</li>
       </ul>
     </div>
 
     <div class="card">
-      <h2>Как встроить на сайт</h2>
-      <pre>&lt;link rel="stylesheet" href="https://ВАШ-ДОМЕН/widget/widget.css"&gt;
-&lt;script&gt;
-  window.SIBIRPROEKT_CHAT_CONFIG = {
-    apiUrl: "https://ВАШ-ДОМЕН/api/chat",
-    title: "Консультант «Сибирь Проект»",
-    subtitle: "На связи 24/7"
-  };
-&lt;/script&gt;
-&lt;script src="https://ВАШ-ДОМЕН/widget/widget.js"&gt;&lt;/script&gt;</pre>
-      <p>Разместите бэкенд (<code>server.py</code>) на сервере, укажите его URL в <code>apiUrl</code> и подключите файлы виджета на страницах сайта.</p>
-    </div>
+      <h2>Локальный запуск демо</h2>
+      <pre><code>cd backend
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+copy .env.example .env  # заполните GIGACHAT_AUTH_KEY
+uvicorn main:app --host 0.0.0.0 --port 8000
 
-    <div class="card">
-      <h2>Быстрый запуск локально</h2>
-      <pre>python server.py
-# Откройте http://localhost:8000
-
-# (опционально) для генерации ответов LLM:
-# Windows PowerShell:
-# $env:OPENAI_API_KEY="ваш_ключ"; $env:OPENAI_MODEL="gpt-4o-mini"; python server.py</pre>
+# Затем откройте index.html через локальный веб-сервер (например):
+# python -m http.server 8080  (из корня проекта)
+# и откройте http://localhost:8080</code></pre>
+      <p>В демо виджет обращается к <code>http://localhost:8000/api/chat</code> (см. конфиг ниже).</p>
     </div>
   </div>
 
   <script>
-    window.SIBIRPROEKT_CHAT_CONFIG = {
-      apiUrl: "/api/chat",
-      title: "Консультант «Сибирь Проект»",
-      subtitle: "На связи 24/7"
+    window.SIBIRPROEKT_WIDGET_CONFIG = {
+      apiUrl: "http://localhost:8000/api/chat"
     };
   </script>
-  <script src="/widget/widget.js"></script>
+  <script src="./frontend/widget.js"></script>
 </body>
 </html>

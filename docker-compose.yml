@@ -1,0 +1,10 @@
+services:
+  gigachat-proxy:
+    build:
+      context: ./backend
+    container_name: sibirproekt-gigachat-proxy
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped

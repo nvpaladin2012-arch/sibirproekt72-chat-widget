@@ -283,6 +283,30 @@
       });
     }
 
+    async function requestAnswer(message, historyForRequest, attempt) {
+      attempt = attempt || 1;
+      var res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message, history: historyForRequest })
+      });
+      var data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+
+      if (data && data.retry && attempt < 3) {
+        await new Promise(function (resolve) { setTimeout(resolve, 1200); });
+        return requestAnswer(message, historyForRequest, attempt + 1);
+      }
+
+      if (!res.ok) {
+        var err = new Error("HTTP " + res.status);
+        err.data = data;
+        throw err;
+      }
+      if (data && data.answer) return String(data.answer);
+      throw new Error("No answer");
+    }
+
     async function sendMessage(text) {
       var message = String(text != null ? text : input.value || "").trim();
       if (!message || sendBtn.disabled) return;
@@ -290,16 +314,10 @@
       input.value = "";
       input.style.height = "auto";
 
+      var historyForRequest = history.slice(0, -1).slice(-12);
       setTyping(true);
       try {
-        var res = await fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: message, history: history.slice(0, -1).slice(-12) })
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        var data = await res.json();
-        var answer = data && data.answer ? String(data.answer) : "Не удалось получить ответ. Попробуйте еще раз или свяжитесь с нами по контактам: 8 (922) 477-05-34, sibir-proekt72@mail.ru.";
+        var answer = await requestAnswer(message, historyForRequest, 1);
         appendMessage("assistant", answer);
       } catch (e) {
         appendMessage("assistant", "Сейчас не удалось получить ответ. Пожалуйста, попробуйте чуть позже или свяжитесь со специалистами:\n- Руководитель: 8 (922) 477-05-34\n- Отдел по работе с клиентами: +7 (982) 972-98-68\n- Почта: sibir-proekt72@mail.ru, sibir-proekt72@yandex.ru\n- График: Пн–Пт 09:00–18:00 (МСК+2)");

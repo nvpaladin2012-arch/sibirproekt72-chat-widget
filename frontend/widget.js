@@ -282,28 +282,72 @@
       });
     }
 
+    function getRefreshUrl() {
+      if (/chat\.php(\?.*)?$/i.test(apiUrl)) return apiUrl.replace(/chat\.php(\?.*)?$/i, "refresh_token.php$1");
+      return apiUrl.replace(/\/?$/, "") + "/../refresh_token.php";
+    }
+
+    async function triggerTokenRefresh() {
+      try {
+        var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 25000) : null;
+        var res = await fetch(getRefreshUrl(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: ctrl ? ctrl.signal : undefined
+        });
+        if (timer) clearTimeout(timer);
+        if (res && res.ok) {
+          try { await res.json(); } catch (e) {}
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
     async function requestAnswer(message, historyForRequest, attempt) {
       attempt = attempt || 1;
-      var res = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: message, history: historyForRequest })
-      });
-      var data = null;
-      try { data = await res.json(); } catch (e) { data = null; }
+      var maxAttempts = 6;
+      var res, data = null, rawText = "";
+      try {
+        res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message, history: historyForRequest })
+        });
+        rawText = await res.text();
+        try { data = rawText ? JSON.parse(rawText) : null; } catch (e) { data = null; }
+      } catch (e) {
+        if (attempt < maxAttempts) {
+          await new Promise(function (resolve) { setTimeout(resolve, 1500 * attempt); });
+          return requestAnswer(message, historyForRequest, attempt + 1);
+        }
+        throw e;
+      }
 
-      if (data && data.retry && attempt < 3) {
+      if (data && data.retry && attempt < maxAttempts) {
+        if (data.need_refresh) {
+          await triggerTokenRefresh();
+        }
         await new Promise(function (resolve) { setTimeout(resolve, 1200); });
         return requestAnswer(message, historyForRequest, attempt + 1);
       }
 
-      if (!res.ok) {
-        var err = new Error("HTTP " + res.status);
-        err.data = data;
-        throw err;
+      if (res.ok && data && data.answer) return String(data.answer);
+
+      // Временные ошибки хостинга/сети (например 502 interstitial) — повторяем
+      if (attempt < maxAttempts && (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 429)) {
+        if (res.status === 503 || res.status === 502) {
+          try { await triggerTokenRefresh(); } catch (e) {}
+        }
+        await new Promise(function (resolve) { setTimeout(resolve, 1500 * attempt); });
+        return requestAnswer(message, historyForRequest, attempt + 1);
       }
-      if (data && data.answer) return String(data.answer);
-      throw new Error("No answer");
+
+      var err = new Error("HTTP " + res.status);
+      err.data = data;
+      err.raw = rawText;
+      throw err;
     }
 
     async function sendMessage(text) {

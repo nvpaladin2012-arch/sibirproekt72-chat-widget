@@ -204,7 +204,6 @@
     root.innerHTML =
       '<div class="spw-launcher-wrap">' +
         '<button class="spw-launcher" type="button" aria-label="Открыть чат">💬</button>' +
-        '<span class="spw-launcher-badge"><span class="spw-dot"></span>Онлайн 24/7</span>' +
       '</div>' +
       '<div class="spw-panel" role="dialog" aria-label="Онлайн-чат">' +
         '<div class="spw-header">' +

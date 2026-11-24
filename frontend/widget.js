@@ -479,7 +479,10 @@
     }
 
     function maybeLocalInvite(reason) {
-      if (inviteShownLocally || panel.classList.contains("open") || history.length > 1 || currentInvite) return;
+      // Один раз за загрузку страницы. История чата и флаг из sessionStorage
+      // больше не блокируют приглашение: иначе повторные заходы и переходы
+      // между страницами в той же вкладке не показывали его вообще.
+      if (inviteShownLocally || panel.classList.contains("open") || currentInvite) return;
       inviteShownLocally = true;
       var texts = {
         time: "Здравствуйте! Если есть вопрос по закупке или гарантии — помогу прямо здесь, в чате.",
@@ -488,11 +491,9 @@
         page: "Здравствуйте! По этой странице есть вопросы? Отвечу в чате анонимно и без регистрации."
       };
       showInvite(texts[reason] || texts.time, 0);
-      try { sessionStorage.setItem("sp_live_local_invite", "1"); } catch (e) {}
     }
 
     function initInviteTriggers() {
-      try { if (sessionStorage.getItem("sp_live_local_invite") === "1") inviteShownLocally = true; } catch (e) {}
       setTimeout(function () { maybeLocalInvite("time"); }, 30000);
       var scrollDone = false;
       window.addEventListener("scroll", function () {

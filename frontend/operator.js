@@ -120,13 +120,19 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  function updateComposer() {
+    var hasText = !!replyInput.value.trim();
+    sendBtn.disabled = !hasText;
+    spellBtn.disabled = !hasText;
+  }
+
   function updateChatHeader() {
     var v = selectedVisitor();
     if (!v) {
       chatTitle.textContent = 'Выберите посетителя';
       chatSub.textContent = 'Слева отображаются посетители, которые сейчас на сайте. Можно отправить приглашение или подключиться к диалогу.';
       inviteBtn.disabled = takeoverBtn.disabled = releaseBtn.disabled = sendBtn.disabled = spellBtn.disabled = replyInput.disabled = true;
-      $('composerHint').textContent = 'Подключитесь к диалогу, чтобы отвечать как оператор.';
+      $('composerHint').textContent = 'Выберите посетителя слева, чтобы ответить или отправить приглашение.';
       return;
     }
     chatTitle.textContent = (v.title || shortUrl(v.url)) + ' • ' + fmtSec(v.seconds);
@@ -134,9 +140,11 @@
     inviteBtn.disabled = false;
     takeoverBtn.disabled = v.mode === 'operator';
     releaseBtn.disabled = v.mode !== 'operator';
-    var canSend = v.mode === 'operator';
-    sendBtn.disabled = spellBtn.disabled = replyInput.disabled = !canSend;
-    $('composerHint').textContent = canSend ? 'Enter — отправить, Shift+Enter — новая строка.' : 'Подключитесь к диалогу, чтобы отвечать как оператор.';
+    replyInput.disabled = false;
+    updateComposer();
+    $('composerHint').textContent = v.mode === 'operator'
+      ? 'Enter — отправить, Shift+Enter — новая строка.'
+      : 'Можно готовить ответ и проверять орфографию — при отправке оператор подключится автоматически.';
   }
 
   async function loadVisitors() {
@@ -180,6 +188,10 @@
     if (!v || !text) return;
     sendBtn.disabled = true;
     try {
+      if (v.mode !== 'operator') {
+        await api('takeover', { method: 'POST', body: { id: v.id } });
+        v.mode = 'operator';
+      }
       await api('message', { method: 'POST', body: { id: v.id, text: text } });
       replyInput.value = '';
       spellResult.style.display = 'none';
@@ -238,6 +250,7 @@
         if (replyInput.disabled) return;
         var sep = replyInput.value && !/\s$/.test(replyInput.value) ? '\n' : '';
         replyInput.value += sep + p;
+        updateComposer();
         replyInput.focus();
       });
       phrasesEl.appendChild(btn);
@@ -295,7 +308,7 @@
       });
     } catch (e) {
       spellResult.textContent = 'Не удалось проверить орфографию: ' + (e.message || 'ошибка');
-    } finally { spellBtn.disabled = replyInput.disabled; }
+    } finally { updateComposer(); }
   }
 
   function startPolling() {
@@ -337,6 +350,7 @@
   replyInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); }
   });
+  replyInput.addEventListener('input', updateComposer);
   inviteBtn.addEventListener('click', function () { setInviteBox(true); });
   inviteSendBtn.addEventListener('click', sendInvite);
   inviteCancelBtn.addEventListener('click', function () { setInviteBox(false); });

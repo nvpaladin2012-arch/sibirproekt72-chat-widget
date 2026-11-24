@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Панель оператора — Сибирь Проект</title>
+  <link rel="stylesheet" href="./frontend/operator.css?v=20261124-2">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Панель оператора чата</h1>
+        <p>Сибирь Проект • наблюдение за посетителями, активные приглашения, быстрые фразы и проверка орфографии</p>
+      </div>
+      <div id="topActions" style="display:none;gap:8px;align-items:center">
+        <span id="authState" class="badge"><span class="dot"></span>Онлайн</span>
+        <button id="logoutBtn" class="btn ghost small" type="button">Выйти</button>
+      </div>
+    </div>
+
+    <section id="loginView" class="card login">
+      <h2>Вход оператора</h2>
+      <p>Панель показывает анонимных посетителей сайта в реальном времени. Имена, телефоны и e-mail не собираются.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn primary" type="submit">Войти</button>
+        <div id="loginStatus" class="status"></div>
+      </form>
+    </section>
+
+    <section id="appView" class="grid" style="display:none">
+      <aside class="card panel">
+        <h2>Посетители на сайте <span id="visitorsCount" class="badge">0</span></h2>
+        <div id="visitorsList" class="visitors"><div class="empty">Загрузка...</div></div>
+      </aside>
+
+      <main class="card panel">
+        <div class="chat-head">
+          <div class="title" id="chatTitle">Выберите посетителя</div>
+          <div class="sub" id="chatSub">Слева отображаются посетители, которые сейчас на сайте. Можно отправить приглашение или подключиться к диалогу.</div>
+          <div class="actions">
+            <button id="inviteBtn" class="btn ghost small" type="button" disabled>Пригласить в чат</button>
+            <button id="takeoverBtn" class="btn ghost small" type="button" disabled>Подключиться к диалогу</button>
+            <button id="releaseBtn" class="btn ghost small" type="button" disabled>Вернуть ИИ</button>
+          </div>
+          <div id="inviteBox" class="invite-box" style="display:none">
+            <input id="inviteText" type="text" maxlength="500" placeholder="Текст приглашения для посетителя" value="Здравствуйте! Могу помочь по закупке, гарантии или ЭЦП? Отвечу прямо в чате.">
+            <button id="inviteSendBtn" class="btn primary small" type="button">Отправить</button>
+            <button id="inviteCancelBtn" class="btn ghost small" type="button">Отмена</button>
+            <span id="inviteStatus" class="hint"></span>
+          </div>
+        </div>
+        <div id="messages" class="messages"><div class="empty">Диалог появится здесь после выбора посетителя.</div></div>
+        <div class="composer">
+          <textarea id="replyInput" placeholder="Ответ посетителю... Enter — отправить, Shift+Enter — новая строка" disabled></textarea>
+          <div class="row">
+            <span class="hint" id="composerHint">Подключитесь к диалогу, чтобы отвечать как оператор.</span>
+            <button id="spellBtn" class="btn ghost small" type="button" disabled>Проверить орфографию</button>
+            <button id="sendBtn" class="btn primary small" type="button" disabled>Отправить</button>
+          </div>
+          <div id="spellResult" class="spell" style="display:none"></div>
+        </div>
+      </main>
+
+      <aside class="card panel phrases-panel">
+        <h2>Быстрые фразы <button id="editPhrasesBtn" class="btn ghost small" type="button">Редактировать</button></h2>
+        <div id="phrases" class="phrases"></div>
+        <div id="phraseEditor" class="phrase-editor" style="display:none">
+          <textarea id="phrasesText" placeholder="Одна фраза на строку"></textarea>
+          <div class="row" style="display:flex;gap:8px;margin-top:8px">
+            <button id="savePhrasesBtn" class="btn primary small" type="button">Сохранить</button>
+            <button id="cancelPhrasesBtn" class="btn ghost small" type="button">Отмена</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    // Для демо FastAPI: frontend может открываться с :8000 (same-origin)
+    // или со статического сервера :8080 (тогда API — на :8000).
+    var spLiveBase = location.port === "8000" ? "" : "http://localhost:8000";
+    window.SIBIRPROEKT_LIVE_API = window.SIBIRPROEKT_LIVE_API || spLiveBase + "/api/live";
+  </script>
+  <script src="./frontend/operator.js?v=20261124-2"></script>
+</body>
+</html>

@@ -122,17 +122,21 @@
 
   function updateComposer() {
     var hasText = !!replyInput.value.trim();
-    sendBtn.disabled = !hasText;
     spellBtn.disabled = !hasText;
+    // Отправлять можно только выбранному посетителю, но готовить текст,
+    // вставлять быстрые фразы и проверять орфографию можно всегда.
+    sendBtn.disabled = !hasText || !selectedId;
   }
 
   function updateChatHeader() {
     var v = selectedVisitor();
     if (!v) {
       chatTitle.textContent = 'Выберите посетителя';
-      chatSub.textContent = 'Слева отображаются посетители, которые сейчас на сайте. Можно отправить приглашение или подключиться к диалогу.';
-      inviteBtn.disabled = takeoverBtn.disabled = releaseBtn.disabled = sendBtn.disabled = spellBtn.disabled = replyInput.disabled = true;
-      $('composerHint').textContent = 'Выберите посетителя слева, чтобы ответить или отправить приглашение.';
+      chatSub.textContent = 'Слева — посетители, которые сейчас на сайте. Быстрые фразы и проверка орфографии доступны сразу.';
+      inviteBtn.disabled = takeoverBtn.disabled = releaseBtn.disabled = true;
+      replyInput.disabled = false;
+      updateComposer();
+      $('composerHint').textContent = 'Готовьте ответ и проверяйте орфографию. Для отправки выберите посетителя слева.';
       return;
     }
     chatTitle.textContent = (v.title || shortUrl(v.url)) + ' • ' + fmtSec(v.seconds);
